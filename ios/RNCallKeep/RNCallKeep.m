@@ -983,12 +983,12 @@ continueUserActivity:(NSUserActivity *)userActivity
     }
 #endif
 
-    if (isAudioCall) {
-        INStartAudioCallIntent *startAudioCallIntent = (INStartAudioCallIntent *)interaction.intent;
-        contact = [startAudioCallIntent.contacts firstObject];
-    } else if (isVideoCall) {
+     if (isVideoCall) {
         INStartVideoCallIntent *startVideoCallIntent = (INStartVideoCallIntent *)interaction.intent;
         contact = [startVideoCallIntent.contacts firstObject];
+    } else {
+        INStartAudioCallIntent *startAudioCallIntent = (INStartAudioCallIntent *)interaction.intent;
+        contact = [startAudioCallIntent.contacts firstObject];
     }
 
     if (contact != nil) {
