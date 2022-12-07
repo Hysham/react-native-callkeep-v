@@ -178,7 +178,13 @@ RCT_EXPORT_MODULE()
 }
 
 + (NSString *) getAudioOutput {
-    return [AVAudioSession sharedInstance].currentRoute.outputs.count > 0 ? [AVAudioSession sharedInstance].currentRoute.outputs[0].portType : nil;
+    @try {
+        return [AVAudioSession sharedInstance].currentRoute.outputs.count > 0 ? [AVAudioSession sharedInstance].currentRoute.outputs[0].portType : nil;
+    }
+    @catch ( NSException *e ){
+        NSLog(@"[RNCallKeep][getAudioOutput] exception: %@",e);
+        return nil;
+    }
 }
 
 + (void)setup:(NSDictionary *)options {
@@ -996,6 +1002,8 @@ continueUserActivity:(NSUserActivity *)userActivity
     }
 
     if (handle != nil && handle.length > 0 ){
+        if (_delayedEvents == nil) _delayedEvents = [NSMutableArray array];
+        
         NSDictionary *userInfo = @{
             @"handle": handle,
             @"video": @(isVideoCall)
