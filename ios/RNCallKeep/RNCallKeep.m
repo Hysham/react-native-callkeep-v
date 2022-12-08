@@ -155,6 +155,7 @@ RCT_EXPORT_MODULE()
     if (_hasListeners) {
         [self sendEventWithName:name body:body];
     } else {
+        if (_delayedEvents == nil) _delayedEvents = [NSMutableArray array];
         NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:
             name, @"name",
             body, @"data",
