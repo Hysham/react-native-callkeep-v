@@ -1003,8 +1003,6 @@ continueUserActivity:(NSUserActivity *)userActivity
     }
 
     if (handle != nil && handle.length > 0 ){
-        if (_delayedEvents == nil) _delayedEvents = [NSMutableArray array];
-        
         NSDictionary *userInfo = @{
             @"handle": handle,
             @"video": @(isVideoCall)
