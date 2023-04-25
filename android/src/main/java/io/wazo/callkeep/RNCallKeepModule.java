@@ -130,6 +130,8 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
         if (instance == null) {
             Log.d(TAG, "[RNCallKeepModule] getInstance : " + (reactContext == null ? "null" : "ok"));
             instance = new RNCallKeepModule(reactContext);
+            instance.registerReceiver();
+            instance.fetchStoredSettings(reactContext);
         }
         if (realContext) {
             instance.setContext(reactContext);
@@ -151,8 +153,6 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
 
         this.reactContext = reactContext;
         delayedEvents = new WritableNativeArray();
-        this.registerReceiver();
-        this.fetchStoredSettings(reactContext);
     }
 
     private boolean isSelfManaged() {
@@ -392,6 +392,9 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
             Log.w(TAG, "[RNCallKeepModule] endCall ignored because no connection found, uuid: " + uuid);
             return;
         }
+        Context context = this.getAppContext();
+        AudioManager audioManager = (AudioManager) context.getSystemService(context.AUDIO_SERVICE);
+        audioManager.setMode(0);
         conn.onDisconnect();
 
         Log.d(TAG, "[RNCallKeepModule] endCall executed, uuid: " + uuid);
@@ -838,7 +841,7 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        if (Build.MANUFACTURER.equalsIgnoreCase("Samsung")) {
+        if (Build.MANUFACTURER.equalsIgnoreCase("Samsung") || Build.MANUFACTURER.equalsIgnoreCase("OnePlus")) {
             Intent intent = new Intent();
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
             intent.setComponent(new ComponentName("com.android.server.telecom",
@@ -968,7 +971,7 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
         telecomManager.registerPhoneAccount(account);
     }
 
-    private void sendEventToJS(String eventName, @Nullable WritableMap params) {
+    public void sendEventToJS(String eventName, @Nullable WritableMap params) {
         boolean isBoundToJS = this.reactContext.hasActiveCatalystInstance();
         Log.v(TAG, "[RNCallKeepModule] sendEventToJS, eventName: " + eventName + ", bound: " + isBoundToJS + ", hasListeners: " + hasListeners + " args : " + (params != null ? params.toString() : "null"));
 
@@ -1021,8 +1024,9 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
             telecomManager.getPhoneAccount(handle).isEnabled();
     }
 
-    private void registerReceiver() {
+    protected void registerReceiver() {
         if (!isReceiverRegistered) {
+            isReceiverRegistered = true;
             voiceBroadcastReceiver = new VoiceBroadcastReceiver();
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(ACTION_END_CALL);
@@ -1042,9 +1046,11 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
 
             if (this.reactContext != null) {
                 LocalBroadcastManager.getInstance(this.reactContext).registerReceiver(voiceBroadcastReceiver, intentFilter);
-                isReceiverRegistered = true;
+
 
                 VoiceConnectionService.startObserving();
+            } else {
+                isReceiverRegistered = false;
             }
         }
     }
@@ -1072,7 +1078,7 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule {
         return MapUtils.readableToWritableMap(options);
     }
 
-    private static void fetchStoredSettings(@Nullable Context fromContext) {
+    protected static void fetchStoredSettings(@Nullable Context fromContext) {
         Context context = fromContext != null ? fromContext : instance.getAppContext();
         if (instance == null && context == null) {
             Log.w(TAG, "[RNCallKeepModule][fetchStoredSettings] no instance nor fromContext.");
