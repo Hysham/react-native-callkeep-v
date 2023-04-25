@@ -130,7 +130,7 @@ RCT_EXPORT_MODULE()
 
 - (void)stopObserving
 {
-    _hasListeners = FALSE;
+    // _hasListeners = FALSE;
 }
 
 - (void)onAudioRouteChange:(NSNotification *)notification
