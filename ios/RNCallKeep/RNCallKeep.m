@@ -552,6 +552,8 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
     @try {
         NSArray *inputs = [RNCallKeep getAudioInputs];
         NSMutableArray *formatedInputs = [RNCallKeep formatAudioInputs: inputs];
+        // fix callkit speaker button issue (This one should be called after the call is established)
+        [self configureAudioSession];
         resolve(formatedInputs);
     }
     @catch ( NSException *e ) {
