@@ -209,6 +209,10 @@ class RNCallKeep {
 
   resetCallkit = () => RNCallKeepModule.resetCallkit();
 
+  disableAudioSession = () => RNCallKeepModule.disableAudioSession();
+
+  enableAudioSession = () => RNCallKeepModule.enableAudioSession();
+
   supportConnectionService = () => supportConnectionService;
 
   hasPhoneAccount = async () => (isIOS ? true : await RNCallKeepModule.hasPhoneAccount());

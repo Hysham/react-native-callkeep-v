@@ -176,6 +176,12 @@ declare module 'react-native-callkeep' {
 
     static endAllCalls(): void
 
+    static resetCallkit(): void
+
+    static disableAudioSession(): void
+
+    static enableAudioSession(): void
+
     static setReachable(): void
 
     static setSettings(settings: IOptions): void;

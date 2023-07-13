@@ -552,14 +552,22 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
     @try {
         NSArray *inputs = [RNCallKeep getAudioInputs];
         NSMutableArray *formatedInputs = [RNCallKeep formatAudioInputs: inputs];
-        // fix callkit speaker button issue (This one should be called after the call is established)
-        [self configureAudioSession];
         resolve(formatedInputs);
     }
     @catch ( NSException *e ) {
         NSLog(@"[RNCallKeep][getAudioRoutes] exception: %@",e);
         reject(@"Failure to get audio routes", e, nil);
     }
+}
+
+RCT_EXPORT_METHOD(disableAudioSession)
+{
+    [self deactivateAudioSession];
+}
+
+RCT_EXPORT_METHOD(enableAudioSession)
+{
+    [self configureAudioSession];
 }
 
 + (NSMutableArray *) formatAudioInputs: (NSMutableArray *)inputs
@@ -911,6 +919,25 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
         }
     }
     return providerConfiguration;
+}
+
+- (void)deactivateAudioSession
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKeep][configureAudioSession] Activating audio session");
+#endif
+
+    AVAudioSession* audioSession = [AVAudioSession sharedInstance];
+    [audioSession setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionAllowBluetooth error:nil];
+
+    [audioSession setMode:AVAudioSessionModeDefault error:nil];
+
+    double sampleRate = 44100.0;
+    [audioSession setPreferredSampleRate:sampleRate error:nil];
+
+    NSTimeInterval bufferDuration = .005;
+    [audioSession setPreferredIOBufferDuration:bufferDuration error:nil];
+    [audioSession setActive:FALSE error:nil];
 }
 
 - (void)configureAudioSession
