@@ -562,11 +562,13 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
 
 RCT_EXPORT_METHOD(disableAudioSession)
 {
+    NSLog(@"[RNCallKeep][disableAudioSession]");
     [self deactivateAudioSession];
 }
 
 RCT_EXPORT_METHOD(enableAudioSession)
 {
+    NSLog(@"[RNCallKeep][enableAudioSession]");
     [self configureAudioSession];
 }
 
