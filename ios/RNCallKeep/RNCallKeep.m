@@ -166,6 +166,7 @@ RCT_EXPORT_MODULE()
     if (_hasListeners) {
         [self sendEventWithName:name body:body];
     } else {
+        if (_delayedEvents == nil) _delayedEvents = [NSMutableArray array];
         NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:
             name, @"name",
             body, @"data",
@@ -205,6 +206,20 @@ RCT_EXPORT_MODULE()
     RNCallKeep *callKeep = [RNCallKeep allocWithZone: nil];
     [callKeep setup:options];
     isSetupNatively = YES;
+}
+
+RCT_EXPORT_METHOD(resetCallkit)
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKeep][resetCallkit]");
+#endif
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (self.callKeepProvider != nil) {
+        [self.callKeepProvider invalidate];
+    }
+    sharedProvider = nil;
+    _isReachable = NO;
 }
 
 RCT_EXPORT_METHOD(setup:(NSDictionary *)options)
@@ -559,6 +574,18 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
     }
 }
 
+RCT_EXPORT_METHOD(disableAudioSession)
+{
+    NSLog(@"[RNCallKeep][disableAudioSession]");
+    [self deactivateAudioSession];
+}
+
+RCT_EXPORT_METHOD(enableAudioSession)
+{
+    NSLog(@"[RNCallKeep][enableAudioSession]");
+    [self configureAudioSession];
+}
+
 + (NSMutableArray *) formatAudioInputs: (NSMutableArray *)inputs
 {
     NSMutableArray *newInputs = [NSMutableArray new];
@@ -910,6 +937,16 @@ RCT_EXPORT_METHOD(getAudioRoutes: (RCTPromiseResolveBlock)resolve
     return providerConfiguration;
 }
 
+- (void)deactivateAudioSession
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKeep][configureAudioSession] Deactivating audio session");
+#endif
+    AVAudioSession* audioSession = [AVAudioSession sharedInstance];
+    
+    [audioSession setActive:FALSE error:nil];
+}
+
 - (void)configureAudioSession
 {
 #ifdef DEBUG
@@ -1006,12 +1043,12 @@ continueUserActivity:(NSUserActivity *)userActivity
     }
 #endif
 
-    if (isAudioCall) {
-        INStartAudioCallIntent *startAudioCallIntent = (INStartAudioCallIntent *)interaction.intent;
-        contact = [startAudioCallIntent.contacts firstObject];
-    } else if (isVideoCall) {
+     if (isVideoCall) {
         INStartVideoCallIntent *startVideoCallIntent = (INStartVideoCallIntent *)interaction.intent;
         contact = [startVideoCallIntent.contacts firstObject];
+    } else {
+        INStartAudioCallIntent *startAudioCallIntent = (INStartAudioCallIntent *)interaction.intent;
+        contact = [startAudioCallIntent.contacts firstObject];
     }
 
     if (contact != nil) {
@@ -1054,7 +1091,7 @@ continueUserActivity:(NSUserActivity *)userActivity
     NSLog(@"[RNCallKeep][CXProviderDelegate][provider:performStartCallAction]");
 #endif
     //do this first, audio sessions are flakey
-    [self configureAudioSession];
+//    [self configureAudioSession];
     //tell the JS to actually make the call
     [self sendEventWithNameWrapper:RNCallKeepDidReceiveStartCallAction body:@{ @"callUUID": [action.callUUID.UUIDString lowercaseString], @"handle": action.handle.value }];
     [action fulfill];
@@ -1080,7 +1117,7 @@ RCT_EXPORT_METHOD(reportUpdatedCall:(NSString *)uuidString contactIdentifier:(NS
 #ifdef DEBUG
     NSLog(@"[RNCallKeep][CXProviderDelegate][provider:performAnswerCallAction]");
 #endif
-    [self configureAudioSession];
+//    [self configureAudioSession];
     [self sendEventWithNameWrapper:RNCallKeepPerformAnswerCallAction body:@{ @"callUUID": [action.callUUID.UUIDString lowercaseString] }];
     [action fulfill];
 }
@@ -1142,7 +1179,7 @@ RCT_EXPORT_METHOD(reportUpdatedCall:(NSString *)uuidString contactIdentifier:(NS
     };
     [[NSNotificationCenter defaultCenter] postNotificationName:AVAudioSessionInterruptionNotification object:nil userInfo:userInfo];
 
-    [self configureAudioSession];
+//    [self configureAudioSession];
     [self sendEventWithNameWrapper:RNCallKeepDidActivateAudioSession body:nil];
 }
 
