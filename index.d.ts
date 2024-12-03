@@ -159,6 +159,12 @@ declare module 'react-native-callkeep' {
 
     static unregisterAndroidEvents(): void
 
+    static resetCallkit(): void
+
+    static disableAudioSession(): void
+
+    static enableAudioSession(): void
+
     static displayIncomingCall(
       uuid: string,
       handle: string,
