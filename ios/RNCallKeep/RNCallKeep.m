@@ -223,14 +223,14 @@ RCT_EXPORT_METHOD(resetCallkit)
 
 RCT_EXPORT_METHOD(disableAudioSession)
 {
-    // NSLog(@"[RNCallKeep][disableAudioSession]");
-    // [self deactivateAudioSession];
+    NSLog(@"[RNCallKeep][disableAudioSession]");
+    [self deactivateAudioSession];
 }
 
 RCT_EXPORT_METHOD(enableAudioSession)
 {
-    // NSLog(@"[RNCallKeep][enableAudioSession]");
-    // [self configureAudioSession];
+    NSLog(@"[RNCallKeep][enableAudioSession]");
+    [self configureAudioSession];
 }
 
 - (void)deactivateAudioSession
@@ -1090,7 +1090,7 @@ continueUserActivity:(NSUserActivity *)userActivity
     NSLog(@"[RNCallKeep][CXProviderDelegate][provider:performStartCallAction]");
 #endif
     //do this first, audio sessions are flakey
-    [self configureAudioSession];
+    // [self configureAudioSession];
     //tell the JS to actually make the call
     [self sendEventWithNameWrapper:RNCallKeepDidReceiveStartCallAction body:@{ @"callUUID": [action.callUUID.UUIDString lowercaseString], @"handle": action.handle.value }];
     [action fulfill];
@@ -1116,7 +1116,7 @@ RCT_EXPORT_METHOD(reportUpdatedCall:(NSString *)uuidString contactIdentifier:(NS
 #ifdef DEBUG
     NSLog(@"[RNCallKeep][CXProviderDelegate][provider:performAnswerCallAction]");
 #endif
-    [self configureAudioSession];
+    // [self configureAudioSession];
     [self sendEventWithNameWrapper:RNCallKeepPerformAnswerCallAction body:@{ @"callUUID": [action.callUUID.UUIDString lowercaseString] }];
     [action fulfill];
 }
@@ -1178,7 +1178,7 @@ RCT_EXPORT_METHOD(reportUpdatedCall:(NSString *)uuidString contactIdentifier:(NS
     };
     [[NSNotificationCenter defaultCenter] postNotificationName:AVAudioSessionInterruptionNotification object:nil userInfo:userInfo];
 
-    [self configureAudioSession];
+    // [self configureAudioSession];
     [self sendEventWithNameWrapper:RNCallKeepDidActivateAudioSession body:nil];
 }
 
