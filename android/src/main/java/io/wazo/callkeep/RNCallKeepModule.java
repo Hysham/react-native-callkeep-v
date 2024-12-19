@@ -35,7 +35,6 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -300,13 +299,26 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule implements Life
     public void stopListenToNativeCallsState() {
         Log.d(TAG, "[RNCallKeepModule] stopListenToNativeCallsState");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && callStateListener !=null){
-            telephonyManager.unregisterTelephonyCallback(callStateListener);
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && legacyCallStateListener != null){
-            telephonyManager.listen(legacyCallStateListener, PhoneStateListener.LISTEN_NONE);
-            Looper.myLooper().quit();
+        if (telephonyManager == null) {
+            Log.w(TAG, "[RNCallKeepModule] TelephonyManager is null, cannot stop listening");
+            return;
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && callStateListener != null) {
+                Log.d(TAG, "[RNCallKeepModule] Unregistering telephony callback");
+                telephonyManager.unregisterTelephonyCallback(callStateListener);
+                callStateListener = null; // Clear reference to prevent leaks
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && legacyCallStateListener != null) {
+                Log.d(TAG, "[RNCallKeepModule] Stopping legacy call state listener");
+                telephonyManager.listen(legacyCallStateListener, PhoneStateListener.LISTEN_NONE);
+                legacyCallStateListener = null; // Clear reference to prevent leaks
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "[RNCallKeepModule] Error while stopping call state listener", e);
         }
     }
+
 
     public void listenToNativeCallsState() {
         Log.d(TAG, "[RNCallKeepModule] listenToNativeCallsState");
@@ -314,17 +326,20 @@ public class RNCallKeepModule extends ReactContextBaseJavaModule implements Life
         int permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE);
 
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "[RNCallKeepModule] listenToNativeCallsState permission granted");
+            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                  callStateListener = new CallStateListener();
-                  telephonyManager.registerTelephonyCallback(context.getMainExecutor(),callStateListener);
+                Log.d(TAG, "[RNCallKeepModule] listenToNativeCallsState 1");
+                callStateListener = new CallStateListener();
+                telephonyManager.registerTelephonyCallback(context.getMainExecutor(), callStateListener);
             } else {
-                  if (Looper.myLooper() == null) {
-                    Looper.prepare();
-                  }
-                  legacyCallStateListener  = new LegacyCallStateListener();
-                  telephonyManager.listen(legacyCallStateListener, PhoneStateListener.LISTEN_CALL_STATE);
-                  Looper.loop();
+                Log.d(TAG, "[RNCallKeepModule] listenToNativeCallsState 2");
+                legacyCallStateListener = new LegacyCallStateListener();
+                telephonyManager.listen(legacyCallStateListener, PhoneStateListener.LISTEN_CALL_STATE);
             }
+        } else {
+            Log.e(TAG, "[RNCallKeepModule] Permission not granted for READ_PHONE_STATE");
         }
     }
 
